@@ -1,5 +1,5 @@
 {
-  "name": "bare-log",
+  "name": "bare-logger",
   "version": "1.0.0",
   "description": "Low-level logger for Bare with system log integration",
   "exports": {
@@ -19,14 +19,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/holepunchto/bare-log.git"
+    "url": "git+https://github.com/holepunchto/bare-logger.git"
   },
   "author": "Holepunch",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/holepunchto/bare-log/issues"
+    "url": "https://github.com/holepunchto/bare-logger/issues"
   },
-  "homepage": "https://github.com/holepunchto/bare-log#readme",
+  "homepage": "https://github.com/holepunchto/bare-logger#readme",
   "dependencies": {
     "bare-format": "^1.0.0"
   },

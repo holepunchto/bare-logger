@@ -1,11 +1,11 @@
-# bare-log
+# bare-logger
 
 Low-level logger for Bare with system log integration.
 
 ## Usage
 
 ```js
-const Log = require('bare-log')
+const Log = require('bare-logger')
 
 const log = new Log()
 

@@ -9,7 +9,7 @@
 #include <uv.h>
 
 static js_value_t *
-bare_log_debug(js_env_t *env, js_callback_info_t *info) {
+bare_logger_debug(js_env_t *env, js_callback_info_t *info) {
   int err;
 
   js_handle_scope_t *scope;
@@ -58,7 +58,7 @@ bare_log_debug(js_env_t *env, js_callback_info_t *info) {
 }
 
 static js_value_t *
-bare_log_info(js_env_t *env, js_callback_info_t *info) {
+bare_logger_info(js_env_t *env, js_callback_info_t *info) {
   int err;
 
   js_handle_scope_t *scope;
@@ -107,7 +107,7 @@ bare_log_info(js_env_t *env, js_callback_info_t *info) {
 }
 
 static js_value_t *
-bare_log_warn(js_env_t *env, js_callback_info_t *info) {
+bare_logger_warn(js_env_t *env, js_callback_info_t *info) {
   int err;
 
   js_handle_scope_t *scope;
@@ -156,7 +156,7 @@ bare_log_warn(js_env_t *env, js_callback_info_t *info) {
 }
 
 static js_value_t *
-bare_log_error(js_env_t *env, js_callback_info_t *info) {
+bare_logger_error(js_env_t *env, js_callback_info_t *info) {
   int err;
 
   js_handle_scope_t *scope;
@@ -205,7 +205,7 @@ bare_log_error(js_env_t *env, js_callback_info_t *info) {
 }
 
 static js_value_t *
-bare_log_fatal(js_env_t *env, js_callback_info_t *info) {
+bare_logger_fatal(js_env_t *env, js_callback_info_t *info) {
   int err;
 
   js_handle_scope_t *scope;
@@ -256,7 +256,7 @@ bare_log_fatal(js_env_t *env, js_callback_info_t *info) {
 }
 
 static js_value_t *
-bare_log_exports(js_env_t *env, js_value_t *exports) {
+bare_logger_exports(js_env_t *env, js_value_t *exports) {
   int err;
 
 #define V(name, fn) \
@@ -268,11 +268,11 @@ bare_log_exports(js_env_t *env, js_value_t *exports) {
     assert(err == 0); \
   }
 
-  V("debug", bare_log_debug)
-  V("info", bare_log_info)
-  V("warn", bare_log_warn)
-  V("error", bare_log_error)
-  V("fatal", bare_log_fatal)
+  V("debug", bare_logger_debug)
+  V("info", bare_logger_info)
+  V("warn", bare_logger_warn)
+  V("error", bare_logger_error)
+  V("fatal", bare_logger_fatal)
 #undef V
 
 #define V(name, bool) \
@@ -290,4 +290,4 @@ bare_log_exports(js_env_t *env, js_value_t *exports) {
   return exports;
 }
 
-BARE_MODULE(bare_log, bare_log_exports)
+BARE_MODULE(bare_logger, bare_logger_exports)

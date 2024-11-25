@@ -7,16 +7,16 @@ project(bare_log C)
 
 fetch_package("github:holepunchto/liblog#a40c28a")
 
-add_bare_module(bare_log)
+add_bare_module(bare_logger)
 
 target_sources(
-  ${bare_log}
+  ${bare_logger}
   PRIVATE
     binding.c
 )
 
 target_link_libraries(
-  ${bare_log}
+  ${bare_logger}
   PRIVATE
     $<TARGET_OBJECTS:log>
   PUBLIC
