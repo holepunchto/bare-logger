@@ -1,11 +1,11 @@
 declare class Log {
-  format(...data: any[]): string
+  format(...data: unknown[]): string
 
-  debug(...data: any[]): void
-  info(...data: any[]): void
-  warn(...data: any[]): void
-  error(...data: any[]): void
-  fatal(...data: any[]): void
+  debug(...data: unknown[]): void
+  info(...data: unknown[]): void
+  warn(...data: unknown[]): void
+  error(...data: unknown[]): void
+  fatal(...data: unknown[]): void
 
   clear(): void
 }
