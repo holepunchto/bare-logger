@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Low-level logger for Bare with system log integration",
   "exports": {
+    "./package": "./package.json",
     ".": {
       "types": "./index.d.ts",
       "default": "./index.js"
-    },
-    "./package": "./package.json"
+    }
   },
   "files": [
     "index.js",

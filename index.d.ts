@@ -1,4 +1,4 @@
-declare class Log {
+interface Log {
   format(...data: unknown[]): string
 
   debug(...data: unknown[]): void
@@ -9,6 +9,8 @@ declare class Log {
 
   clear(): void
 }
+
+declare class Log {}
 
 declare namespace Log {
   export { Log, Log as SystemLog }
