@@ -1,6 +1,6 @@
 {
   "name": "bare-logger",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Low-level logger for Bare with system log integration",
   "exports": {
     "./package": "./package.json",
