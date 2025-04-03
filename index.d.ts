@@ -1,4 +1,6 @@
 interface Log {
+  readonly colors: boolean
+
   format(...data: unknown[]): string
 
   debug(...data: unknown[]): void
@@ -10,10 +12,18 @@ interface Log {
   clear(): void
 }
 
-declare class Log {}
+declare class Log {
+  constructor(options?: { colors: boolean })
+}
+
+declare interface SystemLog extends Log {}
+
+declare class SystemLog {
+  constructor()
+}
 
 declare namespace Log {
-  export { Log, Log as SystemLog }
+  export { Log, SystemLog }
 }
 
 export = Log

@@ -2,8 +2,14 @@ const { formatWithOptions } = require('bare-format')
 const binding = require('./binding')
 
 module.exports = exports = class Log {
+  constructor(opts = {}) {
+    const { colors = binding.isTTY } = opts
+
+    this.colors = colors
+  }
+
   format(...data) {
-    return format(data, binding.isTTY)
+    return format(data, this.colors)
   }
 
   debug(...data) {
@@ -34,8 +40,8 @@ const Log = exports
 exports.Log = Log
 
 exports.SystemLog = class SystemLog extends Log {
-  format(...data) {
-    return format(data, false)
+  constructor() {
+    super({ colors: false })
   }
 
   debug(...data) {
