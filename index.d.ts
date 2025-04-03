@@ -1,3 +1,7 @@
+interface LogOptions {
+  colors?: boolean
+}
+
 interface Log {
   readonly colors: boolean
 
@@ -13,17 +17,23 @@ interface Log {
 }
 
 declare class Log {
-  constructor(options?: { colors: boolean })
+  constructor(options?: LogOptions)
 }
 
-declare interface SystemLog extends Log {}
+interface SystemLog extends Log {}
 
 declare class SystemLog {
   constructor()
 }
 
+interface CompositeLog extends Log {}
+
+declare class CompositeLog {
+  constructor(logs: Log[])
+}
+
 declare namespace Log {
-  export { Log, SystemLog }
+  export { Log, LogOptions, SystemLog, CompositeLog }
 }
 
 export = Log

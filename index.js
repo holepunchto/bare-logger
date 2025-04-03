@@ -67,6 +67,38 @@ exports.SystemLog = class SystemLog extends Log {
   clear() {}
 }
 
+exports.CompositeLog = class CompositeLog extends Log {
+  constructor(logs) {
+    super()
+
+    this._logs = Array.from(logs)
+  }
+
+  debug(...data) {
+    for (const log in this._logs) log.debug(...data)
+  }
+
+  info(...data) {
+    for (const log in this._logs) log.info(...data)
+  }
+
+  warn(...data) {
+    for (const log in this._logs) log.warn(...data)
+  }
+
+  error(...data) {
+    for (const log in this._logs) log.error(...data)
+  }
+
+  fatal(...data) {
+    for (const log in this._logs) log.fatal(...data)
+  }
+
+  clear() {
+    for (const log in this._logs) log.clear()
+  }
+}
+
 function format(data, colors) {
   return (
     formatWithOptions({ colors }, ...data)
