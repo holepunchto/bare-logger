@@ -13,23 +13,23 @@ module.exports = exports = class Log {
   }
 
   debug(...data) {
-    binding.debug(this.format(...data), false)
+    binding.debug(this.format(...data))
   }
 
   info(...data) {
-    binding.info(this.format(...data), false)
+    binding.info(this.format(...data))
   }
 
   warn(...data) {
-    binding.warn(this.format(...data), false)
+    binding.warn(this.format(...data))
   }
 
   error(...data) {
-    binding.error(this.format(...data), false)
+    binding.error(this.format(...data))
   }
 
   fatal(...data) {
-    binding.fatal(this.format(...data), false)
+    binding.fatal(this.format(...data))
   }
 
   clear() {}
@@ -38,34 +38,6 @@ module.exports = exports = class Log {
 const Log = exports
 
 exports.Log = Log
-
-exports.SystemLog = class SystemLog extends Log {
-  constructor() {
-    super({ colors: false })
-  }
-
-  debug(...data) {
-    binding.debug(this.format(...data), true)
-  }
-
-  info(...data) {
-    binding.info(this.format(...data), true)
-  }
-
-  warn(...data) {
-    binding.warn(this.format(...data), true)
-  }
-
-  error(...data) {
-    binding.error(this.format(...data), true)
-  }
-
-  fatal(...data) {
-    binding.fatal(this.format(...data), true)
-  }
-
-  clear() {}
-}
 
 exports.CompositeLog = class CompositeLog extends Log {
   constructor(logs) {

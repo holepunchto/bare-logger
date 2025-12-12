@@ -20,12 +20,6 @@ declare class Log {
   constructor(options?: LogOptions)
 }
 
-interface SystemLog extends Log {}
-
-declare class SystemLog {
-  constructor()
-}
-
 interface CompositeLog extends Log {}
 
 declare class CompositeLog {
@@ -33,7 +27,7 @@ declare class CompositeLog {
 }
 
 declare namespace Log {
-  export { Log, LogOptions, SystemLog, CompositeLog }
+  export { Log, LogOptions, CompositeLog }
 }
 
 export = Log

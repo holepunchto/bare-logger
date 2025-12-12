@@ -1,6 +1,6 @@
 # bare-logger
 
-Low-level logger for Bare with system log integration.
+Low-level logger for Bare.
 
 ## Usage
 
