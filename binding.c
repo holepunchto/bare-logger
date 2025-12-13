@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <bare.h>
 #include <js.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <utf.h>
