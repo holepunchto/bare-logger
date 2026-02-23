@@ -47,27 +47,27 @@ exports.CompositeLog = class CompositeLog extends Log {
   }
 
   debug(...data) {
-    for (const log in this._logs) log.debug(...data)
+    for (const log of this._logs) log.debug(...data)
   }
 
   info(...data) {
-    for (const log in this._logs) log.info(...data)
+    for (const log of this._logs) log.info(...data)
   }
 
   warn(...data) {
-    for (const log in this._logs) log.warn(...data)
+    for (const log of this._logs) log.warn(...data)
   }
 
   error(...data) {
-    for (const log in this._logs) log.error(...data)
+    for (const log of this._logs) log.error(...data)
   }
 
   fatal(...data) {
-    for (const log in this._logs) log.fatal(...data)
+    for (const log of this._logs) log.fatal(...data)
   }
 
   clear() {
-    for (const log in this._logs) log.clear()
+    for (const log of this._logs) log.clear()
   }
 }
 
