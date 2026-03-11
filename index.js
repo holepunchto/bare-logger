@@ -5,7 +5,11 @@ module.exports = exports = class Log {
   constructor(opts = {}) {
     const { colors = binding.isTTY } = opts
 
-    this.colors = colors
+    this._colors = colors
+  }
+
+  get colors() {
+    return this._colors
   }
 
   format(...data) {
