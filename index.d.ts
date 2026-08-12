@@ -9,34 +9,41 @@ interface Log {
   readonly colors: boolean
 
   /**
-   * Formats `data` the same way `debug`, `info`, `warn`, `error`, and `fatal` do, and returns the resulting string without logging it.
-   * @param data - Values to format and log; the first may be a `printf`-style format string (for example `%s`, `%d`, `%o`) with the remaining values as substitutions.
+   * Formats `data` the same way `debug`, `info`, `warn`, `error`, and `fatal` do, and returns the
+   * resulting string without logging it.
+   * @param data - Values to format and log; the first may be a `printf`-style format string (for
+   * example `%s`, `%d`, `%o`) with the remaining values as substitutions.
    */
   format(...data: unknown[]): string
 
   /**
    * Logs `data` at debug level.
-   * @param data - Values to format and log; the first may be a `printf`-style format string (for example `%s`, `%d`, `%o`) with the remaining values as substitutions.
+   * @param data - Values to format and log; the first may be a `printf`-style format string (for
+   * example `%s`, `%d`, `%o`) with the remaining values as substitutions.
    */
   debug(...data: unknown[]): void
   /**
    * Logs `data` at info level.
-   * @param data - Values to format and log; the first may be a `printf`-style format string (for example `%s`, `%d`, `%o`) with the remaining values as substitutions.
+   * @param data - Values to format and log; the first may be a `printf`-style format string (for
+   * example `%s`, `%d`, `%o`) with the remaining values as substitutions.
    */
   info(...data: unknown[]): void
   /**
    * Logs `data` at warn level.
-   * @param data - Values to format and log; the first may be a `printf`-style format string (for example `%s`, `%d`, `%o`) with the remaining values as substitutions.
+   * @param data - Values to format and log; the first may be a `printf`-style format string (for
+   * example `%s`, `%d`, `%o`) with the remaining values as substitutions.
    */
   warn(...data: unknown[]): void
   /**
    * Logs `data` at error level.
-   * @param data - Values to format and log; the first may be a `printf`-style format string (for example `%s`, `%d`, `%o`) with the remaining values as substitutions.
+   * @param data - Values to format and log; the first may be a `printf`-style format string (for
+   * example `%s`, `%d`, `%o`) with the remaining values as substitutions.
    */
   error(...data: unknown[]): void
   /**
    * Logs `data` at fatal level.
-   * @param data - Values to format and log; the first may be a `printf`-style format string (for example `%s`, `%d`, `%o`) with the remaining values as substitutions.
+   * @param data - Values to format and log; the first may be a `printf`-style format string (for
+   * example `%s`, `%d`, `%o`) with the remaining values as substitutions.
    */
   fatal(...data: unknown[]): void
 
@@ -46,7 +53,8 @@ interface Log {
 
 declare class Log {
   /**
-   * @param options - Logger options; `colors` forces ANSI color styling on or off, defaulting to whether the output stream is a TTY.
+   * @param options - Logger options; `colors` forces ANSI color styling on or off, defaulting to
+   * whether the output stream is a TTY.
    */
   constructor(options?: LogOptions)
 }
