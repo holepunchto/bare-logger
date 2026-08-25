@@ -26,10 +26,10 @@ const log = new CompositeLog([log1, log2])
 log.info('Hello %s', 'world!')
 ```
 
-## License
-
-Apache-2.0
-
 ## API
 
 See the [`bare-logger` reference](https://docs.pears.com/reference/bare/modules/bare-logger).
+
+## License
+
+Apache-2.0
