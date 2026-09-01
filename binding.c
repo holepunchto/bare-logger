@@ -1,18 +1,31 @@
 #include <assert.h>
 #include <bare.h>
 #include <js.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <utf.h>
 #include <uv.h>
 
-static js_value_t *
-bare_logger_debug(js_env_t *env, js_callback_info_t *info) {
+static bool
+bare_logger__check_string(js_env_t *env, js_value_t *value) {
   int err;
 
-  js_handle_scope_t *scope;
-  err = js_open_handle_scope(env, &scope);
+  bool is_string;
+  err = js_is_string(env, value, &is_string);
   assert(err == 0);
+
+  if (!is_string) {
+    err = js_throw_type_error(env, NULL, "Data must be a string");
+    assert(err == 0);
+  }
+
+  return is_string;
+}
+
+static bool
+bare_logger__write(js_env_t *env, js_callback_info_t *info, FILE *stream) {
+  int err;
 
   js_value_t *argv[1];
   size_t argc = 1;
@@ -20,190 +33,76 @@ bare_logger_debug(js_env_t *env, js_callback_info_t *info) {
   err = js_get_callback_info(env, info, &argc, argv, NULL, NULL);
   assert(err == 0);
 
-  assert(argc == 1);
+  if (argc < 1) {
+    err = js_throw_type_errorf(env, NULL, "Expected 1 argument, got %zu", argc);
+    assert(err == 0);
 
-  size_t data_len;
-  err = js_get_value_string_utf8(env, argv[0], NULL, 0, &data_len);
+    return false;
+  }
+
+  if (!bare_logger__check_string(env, argv[0])) return false;
+
+  size_t len;
+  err = js_get_value_string_utf8(env, argv[0], NULL, 0, &len);
   assert(err == 0);
 
-  data_len += 1 /* NULL */;
+  utf8_t *data = malloc(len + 1 /* NULL */);
 
-  utf8_t *data = malloc(data_len);
-  err = js_get_value_string_utf8(env, argv[0], data, data_len, NULL);
+  if (data == NULL) {
+    err = js_throw_error(env, uv_err_name(UV_ENOMEM), uv_strerror(UV_ENOMEM));
+    assert(err == 0);
+
+    return false;
+  }
+
+  err = js_get_value_string_utf8(env, argv[0], data, len + 1, &len);
   assert(err == 0);
 
-  err = js_close_handle_scope(env, scope);
-  assert(err == 0);
-
-  err = fprintf(stdout, "%s\n", data);
-  assert(err >= 0);
-
-  err = fflush(stdout);
-  assert(err == 0);
+  fwrite(data, 1, len, stream);
+  fputc('\n', stream);
+  fflush(stream);
 
   free(data);
+
+  return true;
+}
+
+static js_value_t *
+bare_logger_debug(js_env_t *env, js_callback_info_t *info) {
+  bare_logger__write(env, info, stdout);
 
   return NULL;
 }
 
 static js_value_t *
 bare_logger_info(js_env_t *env, js_callback_info_t *info) {
-  int err;
-
-  js_handle_scope_t *scope;
-  err = js_open_handle_scope(env, &scope);
-  assert(err == 0);
-
-  js_value_t *argv[1];
-  size_t argc = 1;
-
-  err = js_get_callback_info(env, info, &argc, argv, NULL, NULL);
-  assert(err == 0);
-
-  assert(argc == 1);
-
-  size_t data_len;
-  err = js_get_value_string_utf8(env, argv[0], NULL, 0, &data_len);
-  assert(err == 0);
-
-  data_len += 1 /* NULL */;
-
-  utf8_t *data = malloc(data_len);
-  err = js_get_value_string_utf8(env, argv[0], data, data_len, NULL);
-  assert(err == 0);
-
-  err = js_close_handle_scope(env, scope);
-  assert(err == 0);
-
-  err = fprintf(stdout, "%s\n", data);
-  assert(err >= 0);
-
-  err = fflush(stdout);
-  assert(err == 0);
-
-  free(data);
+  bare_logger__write(env, info, stdout);
 
   return NULL;
 }
 
 static js_value_t *
 bare_logger_warn(js_env_t *env, js_callback_info_t *info) {
-  int err;
-
-  js_handle_scope_t *scope;
-  err = js_open_handle_scope(env, &scope);
-  assert(err == 0);
-
-  js_value_t *argv[1];
-  size_t argc = 1;
-
-  err = js_get_callback_info(env, info, &argc, argv, NULL, NULL);
-  assert(err == 0);
-
-  assert(argc == 1);
-
-  size_t data_len;
-  err = js_get_value_string_utf8(env, argv[0], NULL, 0, &data_len);
-  assert(err == 0);
-
-  data_len += 1 /* NULL */;
-
-  utf8_t *data = malloc(data_len);
-  err = js_get_value_string_utf8(env, argv[0], data, data_len, NULL);
-  assert(err == 0);
-
-  err = js_close_handle_scope(env, scope);
-  assert(err == 0);
-
-  err = fprintf(stderr, "%s\n", data);
-  assert(err >= 0);
-
-  err = fflush(stderr);
-  assert(err == 0);
-
-  free(data);
+  bare_logger__write(env, info, stderr);
 
   return NULL;
 }
 
 static js_value_t *
 bare_logger_error(js_env_t *env, js_callback_info_t *info) {
-  int err;
-
-  js_handle_scope_t *scope;
-  err = js_open_handle_scope(env, &scope);
-  assert(err == 0);
-
-  js_value_t *argv[1];
-  size_t argc = 1;
-
-  err = js_get_callback_info(env, info, &argc, argv, NULL, NULL);
-  assert(err == 0);
-
-  assert(argc == 1);
-
-  size_t data_len;
-  err = js_get_value_string_utf8(env, argv[0], NULL, 0, &data_len);
-  assert(err == 0);
-
-  data_len += 1 /* NULL */;
-
-  utf8_t *data = malloc(data_len);
-  err = js_get_value_string_utf8(env, argv[0], data, data_len, NULL);
-  assert(err == 0);
-
-  err = js_close_handle_scope(env, scope);
-  assert(err == 0);
-
-  err = fprintf(stderr, "%s\n", data);
-  assert(err >= 0);
-
-  err = fflush(stderr);
-  assert(err == 0);
-
-  free(data);
+  bare_logger__write(env, info, stderr);
 
   return NULL;
 }
 
 static js_value_t *
 bare_logger_fatal(js_env_t *env, js_callback_info_t *info) {
-  int err;
+  if (!bare_logger__write(env, info, stderr)) return NULL;
 
-  js_handle_scope_t *scope;
-  err = js_open_handle_scope(env, &scope);
-  assert(err == 0);
-
-  js_value_t *argv[1];
-  size_t argc = 1;
-
-  err = js_get_callback_info(env, info, &argc, argv, NULL, NULL);
-  assert(err == 0);
-
-  assert(argc == 1);
-
-  size_t data_len;
-  err = js_get_value_string_utf8(env, argv[0], NULL, 0, &data_len);
-  assert(err == 0);
-
-  data_len += 1 /* NULL */;
-
-  utf8_t *data = malloc(data_len);
-  err = js_get_value_string_utf8(env, argv[0], data, data_len, NULL);
-  assert(err == 0);
-
-  err = js_close_handle_scope(env, scope);
-  assert(err == 0);
-
-  err = fprintf(stderr, "%s\n", data);
-  assert(err >= 0);
-
-  err = fflush(stderr);
-  assert(err == 0);
-
-  free(data);
-
-  exit(1);
+  // The record has already been flushed, so terminate without running atexit
+  // handlers and static destructors, which other threads may still be executing
+  // JavaScript against.
+  _Exit(1);
 
   return NULL;
 }
