@@ -17,6 +17,12 @@ test('unicode', async (t) => {
   await t.execution(() => log.debug('😀'))
 })
 
+test('unpaired surrogate', async (t) => {
+  const log = new Log()
+
+  await t.execution(() => log.debug('\ud800'.repeat(1024)))
+})
+
 test('composite', async (t) => {
   const log1 = new Log()
   const log2 = new Log()
