@@ -2,6 +2,7 @@
 #include <bare.h>
 #include <js.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <utf.h>
 #include <uv.h>
@@ -104,35 +105,35 @@ bare_logger__write(js_env_t *env, js_callback_info_t *info, int fd) {
 
 static js_value_t *
 bare_logger_debug(js_env_t *env, js_callback_info_t *info) {
-  bare_logger__write(env, info, 1);
+  bare_logger__write(env, info, fileno(stdout));
 
   return NULL;
 }
 
 static js_value_t *
 bare_logger_info(js_env_t *env, js_callback_info_t *info) {
-  bare_logger__write(env, info, 1);
+  bare_logger__write(env, info, fileno(stdout));
 
   return NULL;
 }
 
 static js_value_t *
 bare_logger_warn(js_env_t *env, js_callback_info_t *info) {
-  bare_logger__write(env, info, 2);
+  bare_logger__write(env, info, fileno(stderr));
 
   return NULL;
 }
 
 static js_value_t *
 bare_logger_error(js_env_t *env, js_callback_info_t *info) {
-  bare_logger__write(env, info, 2);
+  bare_logger__write(env, info, fileno(stderr));
 
   return NULL;
 }
 
 static js_value_t *
 bare_logger_fatal(js_env_t *env, js_callback_info_t *info) {
-  if (!bare_logger__write(env, info, 2)) return NULL;
+  if (!bare_logger__write(env, info, fileno(stderr))) return NULL;
 
   // The record has already been flushed, so terminate without running atexit
   // handlers and static destructors, which other threads may still be executing
