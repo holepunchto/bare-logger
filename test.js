@@ -1,4 +1,7 @@
 const test = require('brittle')
+const os = require('bare-os')
+const path = require('bare-path')
+const { spawn } = require('bare-subprocess')
 const { Log, CompositeLog } = require('.')
 
 test('log levels', async (t) => {
@@ -30,4 +33,31 @@ test('composite', async (t) => {
 
   await t.execution(() => log.debug('Hëllø wørld'))
   await t.execution(() => log.debug('😀'))
+})
+
+test('records survive a full non-blocking pipe', async (t) => {
+  const subprocess = spawn(os.execPath(), [path.join(__dirname, 'test/fixtures/flood.js')], {
+    stdio: ['ignore', 'pipe', 'inherit']
+  })
+
+  const exited = new Promise((resolve) => subprocess.on('exit', resolve))
+
+  let output = ''
+  let stalled = false
+
+  for await (const data of subprocess.stdout) {
+    output += data
+
+    if (!stalled) {
+      stalled = true
+
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    }
+  }
+
+  await exited
+
+  const lines = output.split('\n').filter((line) => line !== '')
+
+  t.is(lines.length, 20000)
 })

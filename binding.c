@@ -2,10 +2,13 @@
 #include <bare.h>
 #include <js.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <utf.h>
 #include <uv.h>
+
+#ifndef _WIN32
+#include <poll.h>
+#endif
 
 static bool
 bare_logger__check_string(js_env_t *env, js_value_t *value) {
@@ -23,8 +26,40 @@ bare_logger__check_string(js_env_t *env, js_value_t *value) {
   return is_string;
 }
 
+static void
+bare_logger__write_all(int fd, const char *data, size_t len) {
+  int res;
+
+  uv_fs_t req;
+
+  while (len > 0) {
+    uv_buf_t buf = uv_buf_init((char *) data, (unsigned int) len);
+
+    res = uv_fs_write(NULL, &req, fd, &buf, 1, -1, NULL);
+
+    uv_fs_req_cleanup(&req);
+
+    if (res == UV_EINTR) continue;
+
+#ifndef _WIN32
+    if (res == UV_EAGAIN) {
+      struct pollfd pfd = {.fd = fd, .events = POLLOUT};
+
+      poll(&pfd, 1, -1);
+
+      continue;
+    }
+#endif
+
+    if (res < 0) return;
+
+    data += res;
+    len -= (size_t) res;
+  }
+}
+
 static bool
-bare_logger__write(js_env_t *env, js_callback_info_t *info, FILE *stream) {
+bare_logger__write(js_env_t *env, js_callback_info_t *info, int fd) {
   int err;
 
   js_value_t *argv[1];
@@ -58,9 +93,9 @@ bare_logger__write(js_env_t *env, js_callback_info_t *info, FILE *stream) {
   err = js_get_value_string_utf8(env, argv[0], data, len + 1, &len);
   assert(err == 0);
 
-  fwrite(data, 1, len, stream);
-  fputc('\n', stream);
-  fflush(stream);
+  data[len] = '\n';
+
+  bare_logger__write_all(fd, (const char *) data, len + 1);
 
   free(data);
 
@@ -69,35 +104,35 @@ bare_logger__write(js_env_t *env, js_callback_info_t *info, FILE *stream) {
 
 static js_value_t *
 bare_logger_debug(js_env_t *env, js_callback_info_t *info) {
-  bare_logger__write(env, info, stdout);
+  bare_logger__write(env, info, 1);
 
   return NULL;
 }
 
 static js_value_t *
 bare_logger_info(js_env_t *env, js_callback_info_t *info) {
-  bare_logger__write(env, info, stdout);
+  bare_logger__write(env, info, 1);
 
   return NULL;
 }
 
 static js_value_t *
 bare_logger_warn(js_env_t *env, js_callback_info_t *info) {
-  bare_logger__write(env, info, stderr);
+  bare_logger__write(env, info, 2);
 
   return NULL;
 }
 
 static js_value_t *
 bare_logger_error(js_env_t *env, js_callback_info_t *info) {
-  bare_logger__write(env, info, stderr);
+  bare_logger__write(env, info, 2);
 
   return NULL;
 }
 
 static js_value_t *
 bare_logger_fatal(js_env_t *env, js_callback_info_t *info) {
-  if (!bare_logger__write(env, info, stderr)) return NULL;
+  if (!bare_logger__write(env, info, 2)) return NULL;
 
   // The record has already been flushed, so terminate without running atexit
   // handlers and static destructors, which other threads may still be executing
