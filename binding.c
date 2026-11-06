@@ -1,11 +1,16 @@
 #include <assert.h>
 #include <bare.h>
+#include <errno.h>
 #include <js.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <utf.h>
 #include <uv.h>
+
+#ifndef _WIN32
+#include <poll.h>
+#endif
 
 static bool
 bare_logger__check_string(js_env_t *env, js_value_t *value) {
@@ -23,9 +28,69 @@ bare_logger__check_string(js_env_t *env, js_value_t *value) {
   return is_string;
 }
 
+#ifndef _WIN32
+static void
+bare_logger__wait_writable(int fd) {
+  struct pollfd pfd = {.fd = fd, .events = POLLOUT};
+
+  poll(&pfd, 1, -1);
+}
+#endif
+
+// Drain what libc has buffered for the stream, so the record lands after it and
+// the buffer has room.
+static void
+bare_logger__flush(FILE *stream, int fd) {
+  while (fflush(stream) != 0) {
+    if (errno == EINTR) continue;
+
+#ifndef _WIN32
+    if (errno == EAGAIN) {
+      bare_logger__wait_writable(fd);
+
+      continue;
+    }
+#endif
+
+    return;
+  }
+}
+
+static void
+bare_logger__write_all(int fd, const char *data, size_t len) {
+  int res;
+
+  uv_fs_t req;
+
+  while (len > 0) {
+    uv_buf_t buf = uv_buf_init((char *) data, (unsigned int) len);
+
+    res = uv_fs_write(NULL, &req, fd, &buf, 1, -1, NULL);
+
+    uv_fs_req_cleanup(&req);
+
+    if (res == UV_EINTR) continue;
+
+#ifndef _WIN32
+    if (res == UV_EAGAIN) {
+      bare_logger__wait_writable(fd);
+
+      continue;
+    }
+#endif
+
+    if (res < 0) return;
+
+    data += res;
+    len -= (size_t) res;
+  }
+}
+
 static bool
 bare_logger__write(js_env_t *env, js_callback_info_t *info, FILE *stream) {
   int err;
+
+  int fd = fileno(stream);
 
   js_value_t *argv[1];
   size_t argc = 1;
@@ -58,9 +123,11 @@ bare_logger__write(js_env_t *env, js_callback_info_t *info, FILE *stream) {
   err = js_get_value_string_utf8(env, argv[0], data, len + 1, &len);
   assert(err == 0);
 
-  fwrite(data, 1, len, stream);
-  fputc('\n', stream);
-  fflush(stream);
+  data[len] = '\n';
+
+  bare_logger__flush(stream, fd);
+
+  bare_logger__write_all(fd, (const char *) data, len + 1);
 
   free(data);
 

@@ -37,6 +37,10 @@
     "bare-format": "^1.0.0"
   },
   "devDependencies": {
+    "bare-os": "^3.9.4",
+    "bare-path": "^3.1.2",
+    "bare-pipe": "^4.4.0",
+    "bare-subprocess": "^6.2.2",
     "brittle": "^3.4.0",
     "cmake-bare": "^1.1.2",
     "lunte": "^1.8.4",
