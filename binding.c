@@ -1,11 +1,19 @@
 #include <assert.h>
 #include <bare.h>
+#include <errno.h>
 #include <js.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <utf.h>
 #include <uv.h>
+
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <poll.h>
+#include <unistd.h>
+#endif
 
 static bool
 bare_logger__check_string(js_env_t *env, js_value_t *value) {
@@ -23,9 +31,73 @@ bare_logger__check_string(js_env_t *env, js_value_t *value) {
   return is_string;
 }
 
+static void
+bare_logger__lock(FILE *stream) {
+#ifdef _WIN32
+  _lock_file(stream);
+#else
+  flockfile(stream);
+#endif
+}
+
+static void
+bare_logger__unlock(FILE *stream) {
+#ifdef _WIN32
+  _unlock_file(stream);
+#else
+  funlockfile(stream);
+#endif
+}
+
+static bool
+bare_logger__should_retry(int fd) {
+  if (errno == EINTR) return true;
+
+#ifndef _WIN32
+  if (errno == EAGAIN) {
+    struct pollfd pfd = {.fd = fd, .events = POLLOUT};
+
+    poll(&pfd, 1, -1);
+
+    return true;
+  }
+#endif
+
+  return false;
+}
+
+static void
+bare_logger__flush(FILE *stream, int fd) {
+  while (fflush(stream) != 0) {
+    if (!bare_logger__should_retry(fd)) return;
+  }
+}
+
+static void
+bare_logger__write_all(int fd, const char *data, size_t len) {
+  while (len > 0) {
+#ifdef _WIN32
+    int res = _write(fd, data, (unsigned int) len);
+#else
+    ssize_t res = write(fd, data, len);
+#endif
+
+    if (res < 0) {
+      if (bare_logger__should_retry(fd)) continue;
+
+      return;
+    }
+
+    data += res;
+    len -= (size_t) res;
+  }
+}
+
 static bool
 bare_logger__write(js_env_t *env, js_callback_info_t *info, FILE *stream) {
   int err;
+
+  int fd = fileno(stream);
 
   js_value_t *argv[1];
   size_t argc = 1;
@@ -58,9 +130,15 @@ bare_logger__write(js_env_t *env, js_callback_info_t *info, FILE *stream) {
   err = js_get_value_string_utf8(env, argv[0], data, len + 1, &len);
   assert(err == 0);
 
-  fwrite(data, 1, len, stream);
-  fputc('\n', stream);
-  fflush(stream);
+  data[len] = '\n';
+
+  bare_logger__lock(stream);
+
+  bare_logger__flush(stream, fd);
+
+  bare_logger__write_all(fd, (const char *) data, len + 1);
+
+  bare_logger__unlock(stream);
 
   free(data);
 
