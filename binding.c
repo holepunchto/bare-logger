@@ -8,19 +8,12 @@
 #include <utf.h>
 #include <uv.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <poll.h>
+#include <unistd.h>
 #endif
-
-static uv_once_t bare_logger__lock_guard = UV_ONCE_INIT;
-
-static uv_mutex_t bare_logger__lock;
-
-static void
-bare_logger__on_lock_init(void) {
-  int err = uv_mutex_init(&bare_logger__lock);
-  assert(err == 0);
-}
 
 static bool
 bare_logger__check_string(js_env_t *env, js_value_t *value) {
@@ -38,56 +31,62 @@ bare_logger__check_string(js_env_t *env, js_value_t *value) {
   return is_string;
 }
 
-#ifndef _WIN32
 static void
-bare_logger__wait_writable(int fd) {
-  struct pollfd pfd = {.fd = fd, .events = POLLOUT};
-
-  poll(&pfd, 1, -1);
-}
+bare_logger__lock(FILE *stream) {
+#ifdef _WIN32
+  _lock_file(stream);
+#else
+  flockfile(stream);
 #endif
+}
+
+static void
+bare_logger__unlock(FILE *stream) {
+#ifdef _WIN32
+  _unlock_file(stream);
+#else
+  funlockfile(stream);
+#endif
+}
+
+static bool
+bare_logger__should_retry(int fd) {
+  if (errno == EINTR) return true;
+
+#ifndef _WIN32
+  if (errno == EAGAIN) {
+    struct pollfd pfd = {.fd = fd, .events = POLLOUT};
+
+    poll(&pfd, 1, -1);
+
+    return true;
+  }
+#endif
+
+  return false;
+}
 
 static void
 bare_logger__flush(FILE *stream, int fd) {
   while (fflush(stream) != 0) {
-    if (errno == EINTR) continue;
-
-#ifndef _WIN32
-    if (errno == EAGAIN) {
-      bare_logger__wait_writable(fd);
-
-      continue;
-    }
-#endif
-
-    return;
+    if (!bare_logger__should_retry(fd)) return;
   }
 }
 
 static void
 bare_logger__write_all(int fd, const char *data, size_t len) {
-  int res;
-
-  uv_fs_t req;
-
   while (len > 0) {
-    uv_buf_t buf = uv_buf_init((char *) data, (unsigned int) len);
-
-    res = uv_fs_write(NULL, &req, fd, &buf, 1, -1, NULL);
-
-    uv_fs_req_cleanup(&req);
-
-    if (res == UV_EINTR) continue;
-
-#ifndef _WIN32
-    if (res == UV_EAGAIN) {
-      bare_logger__wait_writable(fd);
-
-      continue;
-    }
+#ifdef _WIN32
+    int res = _write(fd, data, (unsigned int) len);
+#else
+    ssize_t res = write(fd, data, len);
 #endif
 
-    if (res < 0) return;
+    if (res < 0) {
+      if (bare_logger__should_retry(fd)) continue;
+
+      return;
+    }
 
     data += res;
     len -= (size_t) res;
@@ -133,15 +132,13 @@ bare_logger__write(js_env_t *env, js_callback_info_t *info, FILE *stream) {
 
   data[len] = '\n';
 
-  uv_once(&bare_logger__lock_guard, bare_logger__on_lock_init);
-
-  uv_mutex_lock(&bare_logger__lock);
+  bare_logger__lock(stream);
 
   bare_logger__flush(stream, fd);
 
   bare_logger__write_all(fd, (const char *) data, len + 1);
 
-  uv_mutex_unlock(&bare_logger__lock);
+  bare_logger__unlock(stream);
 
   free(data);
 
