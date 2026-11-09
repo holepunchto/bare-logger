@@ -37,7 +37,10 @@
     "bare-format": "^1.0.0"
   },
   "devDependencies": {
+    "bare-env": "^3.0.1",
+    "bare-link": "^4.2.0",
     "bare-os": "^3.9.4",
+    "bare-pack": "^3.0.2",
     "bare-path": "^3.1.2",
     "bare-pipe": "^4.4.0",
     "bare-subprocess": "^6.2.2",

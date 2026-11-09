@@ -12,6 +12,16 @@
 #include <poll.h>
 #endif
 
+static uv_once_t bare_logger__lock_guard = UV_ONCE_INIT;
+
+static uv_mutex_t bare_logger__lock;
+
+static void
+bare_logger__on_lock_init(void) {
+  int err = uv_mutex_init(&bare_logger__lock);
+  assert(err == 0);
+}
+
 static bool
 bare_logger__check_string(js_env_t *env, js_value_t *value) {
   int err;
@@ -37,8 +47,6 @@ bare_logger__wait_writable(int fd) {
 }
 #endif
 
-// Drain what libc has buffered for the stream, so the record lands after it and
-// the buffer has room.
 static void
 bare_logger__flush(FILE *stream, int fd) {
   while (fflush(stream) != 0) {
@@ -125,9 +133,15 @@ bare_logger__write(js_env_t *env, js_callback_info_t *info, FILE *stream) {
 
   data[len] = '\n';
 
+  uv_once(&bare_logger__lock_guard, bare_logger__on_lock_init);
+
+  uv_mutex_lock(&bare_logger__lock);
+
   bare_logger__flush(stream, fd);
 
   bare_logger__write_all(fd, (const char *) data, len + 1);
+
+  uv_mutex_unlock(&bare_logger__lock);
 
   free(data);
 
