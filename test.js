@@ -4,7 +4,7 @@ const fs = require('bare-fs')
 const os = require('bare-os')
 const path = require('bare-path')
 const { spawn } = require('bare-subprocess')
-const { bin, run } = require('./test/helpers')
+const { run } = require('./test/helpers')
 const { Log, CompositeLog } = require('.')
 
 test('log levels', async (t) => {
@@ -72,8 +72,8 @@ test('records of two threads do not interleave', { timeout: 120000 }, async (t) 
   const worker = path.join(__dirname, 'test/fixtures/threads-worker.js')
   const bundle = path.join(dir, 'worker.bundle')
 
-  await run([bin('bare-pack'), '--linked', '-o', bundle, worker])
-  await run([bin('bare-link'), '--host', `${os.platform()}-${os.arch()}`, '-o', dir, worker])
+  await run('bare-pack', ['--linked', '-o', bundle, worker])
+  await run('bare-link', ['--host', `${os.platform()}-${os.arch()}`, '-o', dir, worker])
 
   const subprocess = spawn(
     os.execPath(),

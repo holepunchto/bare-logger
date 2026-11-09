@@ -3,17 +3,15 @@ const { spawn } = require('bare-subprocess')
 
 const root = path.join(__dirname, '..')
 
-exports.bin = function bin(name) {
-  return path.join(root, 'node_modules', '.bin', name)
-}
+exports.run = function run(name, args) {
+  const bin = path.join(root, 'node_modules', name, 'bin.js')
 
-exports.run = function run(args) {
-  const subprocess = spawn(args[0], args.slice(1), { stdio: ['ignore', 'ignore', 'inherit'] })
+  const subprocess = spawn('node', [bin, ...args], { stdio: ['ignore', 'ignore', 'inherit'] })
 
   return new Promise((resolve, reject) => {
     subprocess.on('exit', (code) => {
       if (code === 0) resolve()
-      else reject(new Error(`${args[0]} exited with ${code}`))
+      else reject(new Error(`${name} exited with ${code}`))
     })
   })
 }
