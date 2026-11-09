@@ -85,11 +85,13 @@ test('records of two threads do not interleave', { timeout: 120000 }, async (t) 
     }
   )
 
+  const exited = new Promise((resolve) => subprocess.on('exit', resolve))
+
   let output = ''
 
   for await (const data of subprocess.stdout) output += data
 
-  await new Promise((resolve) => subprocess.on('exit', resolve))
+  t.is(await exited, 0, 'the threads run')
 
   const lines = output.split('\n').filter((line) => line !== '')
 
