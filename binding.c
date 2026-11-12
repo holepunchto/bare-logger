@@ -10,7 +10,7 @@
 
 #ifdef _WIN32
 #include <io.h>
-#else
+#elif !defined(__FREERTOS__)
 #include <poll.h>
 #include <unistd.h>
 #endif
@@ -49,6 +49,7 @@ bare_logger__unlock(FILE *stream) {
 #endif
 }
 
+#ifndef __FREERTOS__
 static bool
 bare_logger__should_retry(int fd) {
   if (errno == EINTR) return true;
@@ -92,12 +93,11 @@ bare_logger__write_all(int fd, const char *data, size_t len) {
     len -= (size_t) res;
   }
 }
+#endif
 
 static bool
 bare_logger__write(js_env_t *env, js_callback_info_t *info, FILE *stream) {
   int err;
-
-  int fd = fileno(stream);
 
   js_value_t *argv[1];
   size_t argc = 1;
@@ -134,9 +134,19 @@ bare_logger__write(js_env_t *env, js_callback_info_t *info, FILE *stream) {
 
   bare_logger__lock(stream);
 
+#ifdef __FREERTOS__
+  // There are no file descriptors, so the record is written through the stream,
+  // which the firmware routes to wherever its console is.
+  fwrite(data, 1, len + 1, stream);
+
+  fflush(stream);
+#else
+  int fd = fileno(stream);
+
   bare_logger__flush(stream, fd);
 
   bare_logger__write_all(fd, (const char *) data, len + 1);
+#endif
 
   bare_logger__unlock(stream);
 
